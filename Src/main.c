@@ -141,11 +141,11 @@ int main(void)
 	  sensor_time = hcsr04_read();
 	  dist  = sensor_time * .034;
 	  HAL_Delay(200);
-	  if(dist >= 15 && dist <= 20){
+	  if(dist >= 15 && dist<=20){ //Empty
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 	  }
-	  else{
+	  else{ //Full
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }

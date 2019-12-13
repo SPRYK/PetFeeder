@@ -6228,7 +6228,7 @@ int main(void)
 	  HAL_Delay(200);
  8002a54:	20c8      	movs	r0, #200	; 0xc8
  8002a56:	f7fe f997 	bl	8000d88 <HAL_Delay>
-	  if(dist >= 15 && dist <= 20){
+	  if(dist >= 15 && dist<=20){ //Empty
  8002a5a:	4b15      	ldr	r3, [pc, #84]	; (8002ab0 <main+0xb0>)
  8002a5c:	681b      	ldr	r3, [r3, #0]
  8002a5e:	2b0e      	cmp	r3, #14
@@ -6249,7 +6249,7 @@ int main(void)
  8002a7e:	f7fe fc3d 	bl	80012fc <HAL_GPIO_WritePin>
  8002a82:	e00b      	b.n	8002a9c <main+0x9c>
 	  }
-	  else{
+	  else{ //Full
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
  8002a84:	2200      	movs	r2, #0
  8002a86:	f44f 4180 	mov.w	r1, #16384	; 0x4000
