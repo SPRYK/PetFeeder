@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <time.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,9 +44,13 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim4;
+
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -58,6 +62,8 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_RTC_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -66,6 +72,12 @@ static void MX_TIM4_Init(void);
 /* USER CODE BEGIN 0 */
 uint32_t dist;
 uint32_t sensor_time;
+
+unsigned int hour0;
+unsigned int min0;
+unsigned int sec0;
+unsigned int diffNotifyTime;
+
 void delay (uint32_t us)
   {
    __HAL_TIM_SET_COUNTER(&htim4, 0);
@@ -74,13 +86,13 @@ void delay (uint32_t us)
   uint32_t hcsr04_read (void)
   {
    uint32_t local_time=0;
-   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);  // pull the TRIG pin HIGH
+   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);  // pull the TRIG pin HIGH
    delay(2);  // wait for 2 us
 
 
-   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET);  // pull the TRIG pin HIGH
    delay(10);  // wait for 10 us
-   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);  // pull the TRIG pin low
+   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);  // pull the TRIG pin low
 
    // read the time for which the pin is high
 
@@ -92,6 +104,71 @@ void delay (uint32_t us)
     }
    return local_time;
   }
+
+
+ unsigned int rtc_read(int mode) {//0 for hour, 1 for minute, 2 for second
+      RTC_DateTypeDef dateStruct;
+      RTC_TimeTypeDef timeStruct;
+      struct tm timeinfo;
+
+      hrtc.Instance = RTC;
+
+      // Read actual date and time
+      HAL_RTC_GetTime(&hrtc, &timeStruct, FORMAT_BIN); // Read time first!
+      HAL_RTC_GetDate(&hrtc, &dateStruct, FORMAT_BIN);
+
+      // Setup a tm structure based on the RTC
+      timeinfo.tm_wday = dateStruct.WeekDay;
+      timeinfo.tm_mon  = dateStruct.Month - 1;
+      timeinfo.tm_mday = dateStruct.Date;
+      timeinfo.tm_year = dateStruct.Year + 100;
+      timeinfo.tm_hour = timeStruct.Hours;
+      timeinfo.tm_min  = timeStruct.Minutes;
+      timeinfo.tm_sec  = timeStruct.Seconds;
+
+      if(mode==0) return timeinfo.tm_year;
+      if(mode==1) return timeinfo.tm_min;
+      return timeinfo.tm_sec;
+  }
+
+unsigned int getTime(unsigned int hour,unsigned int min,unsigned int sec)
+{
+	return hour*3600+min*60+sec;
+}
+
+_Bool canNotify()
+{
+	 unsigned int hour2=rtc_read(0);
+	 unsigned int min2=rtc_read(1);
+	 unsigned int sec2=rtc_read(2);
+	 unsigned int oldTime=getTime(hour0,min0,sec0);
+	 unsigned int newTime=getTime(hour2,min2,sec2);
+	 if((newTime-oldTime) > diffNotifyTime) return 1;
+	 else return 0;
+}
+
+void setCurTime()
+{
+	hour0=rtc_read(0);
+	min0=rtc_read(1);
+	sec0=rtc_read(2);
+
+}
+
+void initNotify(unsigned int diffTime)
+{
+	setCurTime();
+	diffNotifyTime=diffTime;
+}
+
+void notify()
+{
+	if(!canNotify()) return;
+	char c[]="Notify\r\n";
+	HAL_UART_Transmit(&huart2, c, sizeof(c), 1000);
+	setCurTime();
+	return;
+}
 
 /* USER CODE END 0 */
 
@@ -120,6 +197,11 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  unsigned int minEmpty=15;
+  unsigned int maxEmpty=20;
+  unsigned int diffTime = 10;//In second
+  initNotify(diffTime);
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -127,6 +209,8 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM4_Init();
+  MX_RTC_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -140,15 +224,16 @@ int main(void)
 	  /////////1//////
 	  sensor_time = hcsr04_read();
 	  dist  = sensor_time * .034;
-	  HAL_Delay(200);
-	  if(dist >= 15 && dist<=20){ //Empty
+	  if(dist >= minEmpty && dist<=maxEmpty){ //Empty
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 	  }
-	  else{ //Full
+	  else{ //Full -> Notify user
+		  notify();
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
+	  HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
@@ -165,6 +250,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage 
   */
@@ -172,8 +258,9 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -194,6 +281,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
@@ -230,6 +323,68 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+  /** Initialize RTC Only 
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+    
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date 
+  */
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
+  sDate.Date = 0x1;
+  sDate.Year = 0x0;
+
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
@@ -331,6 +486,39 @@ static void MX_TIM4_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -354,7 +542,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13|GPIO_PIN_14|Audio_RST_Pin, GPIO_PIN_RESET);
@@ -366,12 +554,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CS_I2C_SPI_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : OTG_FS_PowerSwitchOn_Pin */
-  GPIO_InitStruct.Pin = OTG_FS_PowerSwitchOn_Pin;
+  /*Configure GPIO pins : OTG_FS_PowerSwitchOn_Pin PC4 */
+  GPIO_InitStruct.Pin = OTG_FS_PowerSwitchOn_Pin|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(OTG_FS_PowerSwitchOn_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PDM_OUT_Pin */
   GPIO_InitStruct.Pin = PDM_OUT_Pin;
@@ -391,13 +579,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PA2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : I2S3_WS_Pin */
