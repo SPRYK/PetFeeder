@@ -77,6 +77,7 @@ unsigned int hour0;
 unsigned int min0;
 unsigned int sec0;
 unsigned int diffNotifyTime;
+unsigned int delayTime;
 
 void delay (uint32_t us)
   {
@@ -152,13 +153,15 @@ void setCurTime()
 	hour0=rtc_read(0);
 	min0=rtc_read(1);
 	sec0=rtc_read(2);
+	return ;
 
 }
 
 void initNotify(unsigned int diffTime)
 {
 	setCurTime();
-	diffNotifyTime=diffTime;
+	diffNotifyTime=diffTime-delayTime/1000;
+	return;
 }
 
 void notify()
@@ -169,6 +172,13 @@ void notify()
 	setCurTime();
 	return;
 }
+
+uint32_t readFromSensor()
+{
+	return hcsr04_read() * .034;
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -200,6 +210,7 @@ int main(void)
   unsigned int minEmpty=15;
   unsigned int maxEmpty=20;
   unsigned int diffTime = 10;//In second
+  delayTime = 1000; //In milli second
   initNotify(diffTime);
 
   /* USER CODE END SysInit */
@@ -222,18 +233,22 @@ int main(void)
   while (1)
   {
 	  /////////1//////
-	  sensor_time = hcsr04_read();
-	  dist  = sensor_time * .034;
-	  if(dist >= minEmpty && dist<=maxEmpty){ //Empty
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+	  dist  = readFromSensor();
+	  if(dist >= minEmpty && dist<=maxEmpty){ //Empty -> Notify
+		  HAL_Delay(30);
+		  dist = readFromSensor();
+		  if(dist >=minEmpty && dist <=maxEmpty)
+		  {
+			  notify();
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+		  }
 	  }
-	  else{ //Full -> Notify user
-		  notify();
+	  else{ //Full
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
-	  HAL_Delay(10);
+	  HAL_Delay(delayTime);
 
     /* USER CODE END WHILE */
 
