@@ -251,9 +251,21 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
 	  HAL_Delay(delayTime);
-	  tmp = (int)(((double)maxEmpty - (double)dist)/(double)maxEmpty);
-	  sprintf(buf,"%d",tmp);
+	  tmp = (int)((((double)maxEmpty - (double)dist)/(double)maxEmpty)*100);
+	  if(tmp < 0){
+		  sprintf(buf,"e");
+	  }
+	  else
+	  {
+		  sprintf(buf,"%d",tmp);
+	  }
 	  HAL_UART_Transmit(&huart2, buf, sizeof(buf), 1000);
+
+//	  if(HAL_UART_Receive(&huart2, buf, sizeof(buf), 1000) == HAL_OK){
+//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 1);
+//		  HAL_Delay(delayTime);
+//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 0);
+	  //}
 
     /* USER CODE END WHILE */
 
