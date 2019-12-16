@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000c516  00000000  00000000  0005676a  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000d2d01  00000000  00000000  00062c80  2**0
+ 18 .debug_str    000d2d0c  00000000  00000000  00062c80  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  00135981  2**0
+ 19 .comment      0000007b  00000000  00000000  0013598c  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00004d9c  00000000  00000000  001359fc  2**2
+ 20 .debug_frame  00004d9c  00000000  00000000  00135a08  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -9418,10 +9418,10 @@ int main(void)
  8003e00:	4603      	mov	r3, r0
  8003e02:	2b00      	cmp	r3, #0
  8003e04:	d1c2      	bne.n	8003d8c <main+0x48>
-		  if(buf[0]=='a')
+		  if(buf[0]=='1')
  8003e06:	4b0e      	ldr	r3, [pc, #56]	; (8003e40 <main+0xfc>)
  8003e08:	781b      	ldrb	r3, [r3, #0]
- 8003e0a:	2b61      	cmp	r3, #97	; 0x61
+ 8003e0a:	2b31      	cmp	r3, #49	; 0x31
  8003e0c:	d1be      	bne.n	8003d8c <main+0x48>
 		  {
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);

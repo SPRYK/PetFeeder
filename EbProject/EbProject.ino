@@ -24,6 +24,9 @@ const char* password = "11111111";
 #define TargetWeb "HTML_web"
 #define TargetFreeboard "Freeboard"
 
+#define D6 12 
+#define D7 13
+
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
 
