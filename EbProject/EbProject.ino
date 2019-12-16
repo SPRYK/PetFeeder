@@ -9,10 +9,12 @@ unsigned int localPort = 2390;
 WiFiUDP udp;
 
 // Gmail
+String email = "getdummy001@gmail.com"; // exist but don't know password need to change
 #include "Gsender.h"
 #pragma region Globals
 #pragma endregion Globals
 
+// Wifi name and password
 const char* ssid     = "bump";
 const char* password = "11111111";
 
@@ -36,7 +38,7 @@ MicroGear microgear(client);
 void sendMail() {
   Gsender *gsender = Gsender::Instance();    // Getting pointer to class instance
   String subject = "PetFeeder needs refill.";
-  if(gsender->Subject(subject)->Send("getdummy001@gmail.com", "Need refill")) {
+  if(gsender->Subject(subject)->Send(email, "Need refill")) {
       Serial.println("Message send.");
   } else {
       Serial.print("Error sending message: ");
@@ -64,30 +66,21 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen)
   //-----------------receive from server and send to STM32-----------------
   if(stateStr == "ON") 
   {
-    /*
-    //digitalWrite(ledPin, LOW);
-    //microgear.chat(TargetWeb, "ON");
     status = "ON";
-    microgear.chat(TargetFreeboard, "ON,");
     Serial.println("TURN ON");
-    */
     chat.print("1");
     chat.println();
   } 
   else if (stateStr == "OFF") 
   {
-    /*
-    //digitalWrite(ledPin, HIGH);
-    //microgear.chat(TargetWeb, "OFF");
     status = "OFF";
-    microgear.chat(TargetFreeboard, "OFF,");
     Serial.println("TURN OFF"); 
-    */
     chat.print("0");
     chat.println();
   }
   else if (stateStr.substring(0,1) == "M") {
       minAmount = stateStr.substring(1,msglen);
+      Serial.println("Set minimum amount to " + minAmount); 
     }
 }
 
@@ -149,11 +142,14 @@ void loop()
           if (data.substring(i,i+1) == ",") {
             status = data.substring(0,i);
             currentAmount = data.substring(i+1);
+            if (currentAmount == "ERROR") {
+              currentAmount = "Out of range";
+              }
             break;
             }
           }
         
-        data=""; 
+        data="";  
       }
  
       String out = String(currentAmount) + "," + String(minAmount) + "," + String(status);
