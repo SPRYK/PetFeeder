@@ -180,6 +180,23 @@ uint32_t readFromSensor()
 	return hcsr04_read() * .034;
 }
 
+void sendByUART(_Bool status,int dist)
+{
+	int tmp = (int)((((double)maxEmpty - (double)dist)/(double)maxEmpty)*100);
+	if(tmp < 0)
+	{
+		if(!status) sprintf(buf,"OFF,ERROR");
+		else sprintf(buf,"ON,ERROR");
+	}
+	else
+	{
+		if(!status) sprintf(buf,"OFF,%d",tmp);
+		else sprintf(buf,"ON,%d",tmp);
+
+	}
+	HAL_UART_Transmit(&huart2, buf, sizeof(buf), 1000);
+}
+
 
 
 /* USER CODE END 0 */
@@ -241,7 +258,7 @@ int main(void)
 		  dist = readFromSensor();
 		  if(dist >=minEmpty && dist <=maxEmpty)
 		  {
-			  notify();
+			  //notify();
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 		  }
@@ -250,16 +267,10 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
+	  _Bool status = HAL_GPIO_ReadPin(GPIOD, GPIO_Pin_14);
+	  sendByUART(status, dist);
 	  HAL_Delay(delayTime);
-	  tmp = (int)((((double)maxEmpty - (double)dist)/(double)maxEmpty)*100);
-	  if(tmp < 0){
-		  sprintf(buf,"e");
-	  }
-	  else
-	  {
-		  sprintf(buf,"%d",tmp);
-	  }
-	  HAL_UART_Transmit(&huart2, buf, sizeof(buf), 1000);
+
 
 //	  if(HAL_UART_Receive(&huart2, buf, sizeof(buf), 1000) == HAL_OK){
 //		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 1);
