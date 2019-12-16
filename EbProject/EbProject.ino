@@ -1,8 +1,20 @@
+#include <dummy.h>
+
 #include <MicroGear.h>
+#include <SoftwareSerial.h>
 #include <ESP8266WiFi.h>
 
-const char* ssid     = "Seth";
-const char* password = "17299004";
+#include <WiFiUdp.h>
+unsigned int localPort = 2390; 
+WiFiUDP udp;
+
+// Gmail
+#include "Gsender.h"
+#pragma region Globals
+#pragma endregion Globals
+
+const char* ssid     = "bump";
+const char* password = "11111111";
 
 #define APPID   "PetFeederEmbedded"
 #define KEY     "5q0HQ67dWjZqNjB"
@@ -12,6 +24,8 @@ const char* password = "17299004";
 #define TargetWeb "HTML_web"
 #define TargetFreeboard "Freeboard"
 
+SoftwareSerial chat(D6,D7); //RX,TX
+String data;
 
 //#define D4 2   // TXD1
 //#define DHTPIN D4     // what digital pin we're connected to
@@ -22,10 +36,21 @@ const char* password = "17299004";
 WiFiClient client;
 MicroGear microgear(client);
 
+void sendMail() {
+  Gsender *gsender = Gsender::Instance();    // Getting pointer to class instance
+  String subject = "PetFeeder needs refill.";
+  if(gsender->Subject(subject)->Send("getdummy001@gmail.com", "Need refill")) {
+      Serial.println("Message send.");
+  } else {
+      Serial.print("Error sending message: ");
+      Serial.println(gsender->getError());
+  }
+}
+
 void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) 
 {
   Serial.print("Incoming message --> ");
-  Serial.print(topic);
+  Serial.print(topic);  
   Serial.print(" : ");
   int check;
   char strState[msglen];
@@ -84,6 +109,8 @@ void setup()
     Serial.begin(115200);
     Serial.println("Starting...");
 
+     chat.begin(115200);
+
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) 
     {
@@ -97,10 +124,16 @@ void setup()
 
     microgear.init(KEY,SECRET,ALIAS);
     microgear.connect(APPID);
+
+    Serial.println("Starting UDP");
+    udp.begin(localPort);
+    Serial.print("Local port: ");
+    Serial.println(udp.localPort());
 }
 
 void loop() 
 {
+  /*
     digitalRead(3);
     if (microgear.connected())
     {
@@ -129,4 +162,37 @@ void loop()
     microgear.connect(APPID);
    }
     delay(1500);
+    */
+  while(chat.available()){
+    char recieved = chat.read();
+    data+= recieved; 
+    //Serial.print('1');
+  }
+  if(data != ""){
+    Serial.println(data);
+    //split
+    char s1[10],s2[10];
+    bool isSecond;
+    int j;
+    /*
+    for(int i=0;i<data.size();i++)
+    {
+      if(data[i]==',')
+      {
+        isSecond=1;
+        j=i;
+        continue;
+      }
+      if(!isSecond) s1[i]=data[i];
+      else s2[i-j-1]=data[i];
+    }
+    s1[j]='\0';
+    s2[data.size()-j]='\0';
+    */
+    data = "";
+  }
+  //Serial.println(chat.available());
+  chat.print("a");
+  chat.println();
+  delay(500);
 }
