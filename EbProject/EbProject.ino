@@ -22,48 +22,46 @@ const char* password = "17299004";
 WiFiClient client;
 MicroGear microgear(client);
 
+String currentAmount = "83";
+String minAmount = "60";
+String status = "OFF";
 void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) 
 {
   Serial.print("Incoming message --> ");
   Serial.print(topic);
   Serial.print(" : ");
-  int check;
+  
   char strState[msglen];
   for (int i = 0; i < msglen; i++) 
   { 
-    if ((char)msg[i] == ',') {
-      check = i;  
-    }
     strState[i] = (char)msg[i];
     Serial.print((char)msg[i]);
   }
   Serial.println();
 
   
-  String currentAmount = String(strState).substring(0, check);
-  String stateStr = String(strState).substring(check+1, msglen);
+  String stateStr = String(strState).substring(0, msglen);
    
   
   if(stateStr == "ON") 
   {
     //digitalWrite(ledPin, LOW);
     //microgear.chat(TargetWeb, "ON");
+    status = "ON";
     microgear.chat(TargetFreeboard, "ON,");
-    Serial.println("ON");
+    Serial.println("TURN ON");
   } 
   else if (stateStr == "OFF") 
   {
     //digitalWrite(ledPin, HIGH);
     //microgear.chat(TargetWeb, "OFF");
+    status = "OFF";
     microgear.chat(TargetFreeboard, "OFF,");
-    Serial.println("OFF"); 
+    Serial.println("TURN OFF"); 
   }
-  else {
-    String newAmount = stateStr.substring(0,check);
-    String newEmail = stateStr.substring(check+1,msglen);
-    // TODO Set new parameter
-  
-  }
+  else if (stateStr.substring(0,1) == "M") {
+      minAmount = stateStr.substring(1,msglen);
+    }
 }
 
 
@@ -97,11 +95,12 @@ void setup()
 
     microgear.init(KEY,SECRET,ALIAS);
     microgear.connect(APPID);
+    microgear.subscribe("/gearname/NodeMCU/data/$/command");
 }
 
 void loop() 
 {
-    digitalRead(3);
+    //digitalRead(3);
     if (microgear.connected())
     {
        microgear.loop();
@@ -115,13 +114,15 @@ void loop()
       // Serial.println(msg);    
 
       //TODO get input to sent by this format
-      
-      //String msg = String(currentAmount)
-       //               + "," + String(minAmount) "," + String(status);
+ 
+      String data = String(currentAmount) + "," + String(minAmount) + "," + String(status);
+      //char msg[128];
+      //data.toCharArray(msg,data.length());
       // microgear.chat(TargetWeb , msg);
-      String msg = "83,60,OFF";
-      microgear.chat(TargetFreeboard , msg);
-      Serial.println("sent data"); 
+      
+      microgear.chat(TargetFreeboard , data);
+      microgear.publish("/gearname/NodeMCU/minAmount", String(minAmount));
+      Serial.println(data); 
     }
    else 
    {
