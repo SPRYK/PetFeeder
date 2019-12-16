@@ -1,16 +1,17 @@
 #include <MicroGear.h>
 #include <ESP8266WiFi.h>
-#include "DHT.h"
 
-const char* ssid     = "Your ssid";
-const char* password = "Your WiFi password";
+const char* ssid     = "Seth";
+const char* password = "17299004";
 
 #define APPID   "PetFeederEmbedded"
 #define KEY     "5q0HQ67dWjZqNjB"
 #define SECRET  "Y9naSXOKUkXT5QCI4UnyR1Fbo"
 
-#define ALIAS   "NodeMCU1"
+#define ALIAS   "NodeMCU"
 #define TargetWeb "HTML_web"
+#define TargetFreeboard "Freeboard"
+
 
 //#define D4 2   // TXD1
 //#define DHTPIN D4     // what digital pin we're connected to
@@ -30,29 +31,36 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen)
   char strState[msglen];
   for (int i = 0; i < msglen; i++) 
   { 
-    if ((char)msg[i] == '/') {
+    if ((char)msg[i] == ',') {
       check = i;  
     }
     strState[i] = (char)msg[i];
     Serial.print((char)msg[i]);
   }
   Serial.println();
+
   
-  String stateStr = String(strState).substring(0, msglen); 
+  String currentAmount = String(strState).substring(0, check);
+  String stateStr = String(strState).substring(check+1, msglen);
+   
   
   if(stateStr == "ON") 
   {
-    digitalWrite(ledPin, LOW);
-    microgear.chat(TargetWeb, "ON");
+    //digitalWrite(ledPin, LOW);
+    //microgear.chat(TargetWeb, "ON");
+    microgear.chat(TargetFreeboard, "ON,");
+    Serial.println("ON");
   } 
   else if (stateStr == "OFF") 
   {
-    digitalWrite(ledPin, HIGH);
-    microgear.chat(TargetWeb, "OFF");
+    //digitalWrite(ledPin, HIGH);
+    //microgear.chat(TargetWeb, "OFF");
+    microgear.chat(TargetFreeboard, "OFF,");
+    Serial.println("OFF"); 
   }
   else {
     String newAmount = stateStr.substring(0,check);
-    String newEmail = stateStr.substring(check+1,msglen)
+    String newEmail = stateStr.substring(check+1,msglen);
     // TODO Set new parameter
   
   }
@@ -67,7 +75,8 @@ void onConnected(char *attribute, uint8_t* msg, unsigned int msglen)
 
 void setup() 
 {
-     /* Event listener */
+   
+    /* Event listener */
     microgear.on(MESSAGE,onMsghandler);
     microgear.on(CONNECTED,onConnected);
 
@@ -92,6 +101,7 @@ void setup()
 
 void loop() 
 {
+    digitalRead(3);
     if (microgear.connected())
     {
        microgear.loop();
@@ -106,9 +116,12 @@ void loop()
 
       //TODO get input to sent by this format
       
-      String data = "/" +String(currentUltra)
-                      + "/" + String(minUltra) "/" + String(status);
-       microgear.chat(TargetWeb , msg);
+      //String msg = String(currentAmount)
+       //               + "," + String(minAmount) "," + String(status);
+      // microgear.chat(TargetWeb , msg);
+      String msg = "83,60,OFF";
+      microgear.chat(TargetFreeboard , msg);
+      Serial.println("sent data"); 
     }
    else 
    {
