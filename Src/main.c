@@ -78,6 +78,8 @@ unsigned int min0;
 unsigned int sec0;
 unsigned int diffNotifyTime;
 unsigned int delayTime;
+char buf[10];
+int tmp;
 
 void delay (uint32_t us)
   {
@@ -167,7 +169,7 @@ void initNotify(unsigned int diffTime)
 void notify()
 {
 	if(!canNotify()) return;
-	char c[]="Notify\r\n";
+	char c[]="1";
 	HAL_UART_Transmit(&huart2, c, sizeof(c), 1000);
 	setCurTime();
 	return;
@@ -249,6 +251,21 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
 	  HAL_Delay(delayTime);
+	  tmp = (int)((((double)maxEmpty - (double)dist)/(double)maxEmpty)*100);
+	  if(tmp < 0){
+		  sprintf(buf,"e");
+	  }
+	  else
+	  {
+		  sprintf(buf,"%d",tmp);
+	  }
+	  HAL_UART_Transmit(&huart2, buf, sizeof(buf), 1000);
+
+//	  if(HAL_UART_Receive(&huart2, buf, sizeof(buf), 1000) == HAL_OK){
+//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 1);
+//		  HAL_Delay(delayTime);
+//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 0);
+	  //}
 
     /* USER CODE END WHILE */
 
