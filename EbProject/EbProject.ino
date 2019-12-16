@@ -21,7 +21,6 @@ const char* password = "11111111";
 #define SECRET  "Y9naSXOKUkXT5QCI4UnyR1Fbo"
 
 #define ALIAS   "NodeMCU"
-#define TargetWeb "HTML_web"
 #define TargetFreeboard "Freeboard"
 
 #define D6 12 
@@ -29,19 +28,10 @@ const char* password = "11111111";
 
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
-
-//#define D4 2   // TXD1
-//#define DHTPIN D4     // what digital pin we're connected to
-//#define DHTTYPE DHT11   // DHT 11
-
-//DHT dht(DHTPIN, DHTTYPE);
+String minAmount = "40"; // can be change
 
 WiFiClient client;
 MicroGear microgear(client);
-
-String currentAmount = "83";
-String minAmount = "60";
-String status = "OFF";
 
 void sendMail() {
   Gsender *gsender = Gsender::Instance();    // Getting pointer to class instance
@@ -115,7 +105,6 @@ void setup()
     microgear.on(MESSAGE,onMsghandler);
     microgear.on(CONNECTED,onConnected);
 
-    //dht.begin();
     Serial.begin(115200);
     Serial.println("Starting...");
 
@@ -135,40 +124,43 @@ void setup()
     microgear.subscribe("/gearname/NodeMCU/data/$/command");
 }
 
+
+String currentAmount;
+String status = "OFF";
+
 void loop() 
 {
-    //digitalRead(3);
     if (microgear.connected())
     {
        //------------receive from stm32 and send to SERVER---------------------
        microgear.loop();
        Serial.println("connected");
 
-       //float Humidity = dht.readHumidity();
-       //float Temp = dht.readTemperature();  // Read temperature as Celsius (the default)
-       //String data = "/" + String(Humidity) + "/" + String(Temp);
-       //char msg[128];
-       //data.toCharArray(msg,data.length());
-      // Serial.println(msg);    
-
       //TODO get input to sent by this format
       while(chat.available()){
       char recieved = chat.read();
       data+= recieved; 
       }
-      if(data != ""){
+      if(data != ""){ // data be like "ON,50" or "OFF,ERROR"
         Serial.println(data);
-        data=""; // data be like "ON,50" or "OFF,ERROR"
+        
+        // split string may be wrong
+        for (int i=0; i<data.length(); i++) {
+          if (data.substring(i,i+1) == ",") {
+            status = data.substring(0,i);
+            currentAmount = data.substring(i+1);
+            break;
+            }
+          }
+        
+        data=""; 
       }
  
-      //String data = String(currentAmount) + "," + String(minAmount) + "," + String(status);
-      //char msg[128];
-      //data.toCharArray(msg,data.length());
-      // microgear.chat(TargetWeb , msg);
+      String out = String(currentAmount) + "," + String(minAmount) + "," + String(status);
       
-      microgear.chat(TargetFreeboard , data);
+      microgear.chat(TargetFreeboard , out);
       microgear.publish("/gearname/NodeMCU/minAmount", String(minAmount));
-      Serial.println(data); 
+      Serial.println(out); 
       
       
     }
