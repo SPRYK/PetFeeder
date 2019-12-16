@@ -78,6 +78,7 @@ unsigned int min0;
 unsigned int sec0;
 unsigned int diffNotifyTime;
 unsigned int delayTime;
+int maxEmpty = 20;
 char buf[10];
 int tmp;
 
@@ -180,9 +181,10 @@ uint32_t readFromSensor()
 	return hcsr04_read() * .034;
 }
 
-void sendByUART(_Bool status,int dist)
+void sendByUART(_Bool status,int dist) //send To uart LIKE "OFF,ERROR" or "ON,50"
 {
 	int tmp = (int)((((double)maxEmpty - (double)dist)/(double)maxEmpty)*100);
+	for(int i=0;i<10;i++) buf[i]='\0';
 	if(tmp < 0)
 	{
 		if(!status) sprintf(buf,"OFF,ERROR");
@@ -259,24 +261,27 @@ int main(void)
 		  if(dist >=minEmpty && dist <=maxEmpty)
 		  {
 			  //notify();
-			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
-			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+			  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 1);
+			  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 		  }
 	  }
 	  else{ //Full
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
+		  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, 0);
+		  //HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
 	  }
-	  _Bool status = HAL_GPIO_ReadPin(GPIOD, GPIO_Pin_14);
+	  _Bool status = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_14);
 	  sendByUART(status, dist);
 	  HAL_Delay(delayTime);
 
 
-//	  if(HAL_UART_Receive(&huart2, buf, sizeof(buf), 1000) == HAL_OK){
-//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 1);
-//		  HAL_Delay(delayTime);
-//		  HAL_GPIO_WritePin(GPIOD, GPIO_Pin_14, 0);
-	  //}
+	  if(HAL_UART_Receive(&huart2, buf, 1, 1000) == HAL_OK){ //if receive data from NODEMCU
+		  if(buf[0]=='1')
+		  {
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
+			  HAL_Delay(100);
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+		  }
+	  }
 
     /* USER CODE END WHILE */
 
@@ -588,7 +593,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13|GPIO_PIN_14|Audio_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|Audio_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : CS_I2C_SPI_Pin */
   GPIO_InitStruct.Pin = CS_I2C_SPI_Pin;
@@ -638,8 +643,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD13 PD14 Audio_RST_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|Audio_RST_Pin;
+  /*Configure GPIO pins : PD12 PD13 PD14 Audio_RST_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|Audio_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

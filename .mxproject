@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/dol51/STM32CubeIDE/workspace_1.0.2/PetFeeder/Inc
+HeaderPath=C:/Users/OMEN/git/EmbedeProject/PetFeeder/Inc
 HeaderFiles=usb_host.h;usbh_conf.h;usbh_platform.h;stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;
-SourcePath=C:/Users/dol51/STM32CubeIDE/workspace_1.0.2/PetFeeder/Src
+SourcePath=C:/Users/OMEN/git/EmbedeProject/PetFeeder/Src
 SourceFiles=usb_host.c;usbh_conf.c;usbh_platform.c;stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]
