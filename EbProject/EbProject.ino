@@ -31,6 +31,8 @@ const char* password = "11111111";
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
 String minAmount = "40"; // can be change
+String currentAmount;
+String status = "OFF";
 
 WiFiClient client;
 MicroGear microgear(client);
@@ -117,10 +119,6 @@ void setup()
     microgear.subscribe("/gearname/NodeMCU/data/$/command");
 }
 
-
-String currentAmount;
-String status = "OFF";
-
 void loop() 
 {
     if (microgear.connected())
@@ -153,7 +151,12 @@ void loop()
       }
  
       String out = String(currentAmount) + "," + String(minAmount) + "," + String(status);
-      
+
+      // send email
+      if (currentAmount.toInt() < minAmount.toInt()) {
+        sendMail();
+        Serial.println("Send E-mail to " + email); 
+        }
       microgear.chat(TargetFreeboard , out);
       microgear.publish("/gearname/NodeMCU/minAmount", String(minAmount));
       Serial.println(out); 
