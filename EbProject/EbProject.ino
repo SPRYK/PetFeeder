@@ -15,8 +15,8 @@ String email = "getdummy001@gmail.com"; // exist but don't know password need to
 #pragma endregion Globals
 
 // Wifi name and password
-const char* ssid     = "bump";
-const char* password = "11111111";
+const char* ssid     = "tanteam";
+const char* password = "023953174343";
 
 #define APPID   "PetFeederEmbedded"
 #define KEY     "5q0HQ67dWjZqNjB"
@@ -31,7 +31,7 @@ const char* password = "11111111";
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
 String minAmount = "40"; // can be change
-String currentAmount;
+String currentAmount = "20";
 String status = "OFF";
 
 WiFiClient client;
@@ -83,7 +83,7 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen)
   else if (stateStr.substring(0,1) == "M") {
       minAmount = stateStr.substring(1,msglen);
       Serial.println("Set minimum amount to " + minAmount); 
-    }
+    }   
 }
 
 
@@ -101,6 +101,7 @@ void setup()
     microgear.on(CONNECTED,onConnected);
 
     Serial.begin(115200);
+    chat.begin(115200);
     Serial.println("Starting...");
 
     WiFi.begin(ssid, password);
