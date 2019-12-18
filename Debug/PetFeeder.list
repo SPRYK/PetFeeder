@@ -8864,7 +8864,7 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8003a64:	51eb851f 	.word	0x51eb851f
 
 08003a68 <delay>:
-int maxEmpty = 20;
+int maxEmpty = 14;
 char buf[10];
 int tmp;
 

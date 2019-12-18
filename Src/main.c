@@ -78,7 +78,7 @@ unsigned int min0;
 unsigned int sec0;
 unsigned int diffNotifyTime;
 unsigned int delayTime;
-int maxEmpty = 20;
+int maxEmpty = 14;
 char buf[10];
 int tmp;
 
