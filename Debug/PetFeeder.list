@@ -9429,17 +9429,16 @@ int main(void)
  8003e10:	f44f 5100 	mov.w	r1, #8192	; 0x2000
  8003e14:	4809      	ldr	r0, [pc, #36]	; (8003e3c <main+0xf8>)
  8003e16:	f7fd faed 	bl	80013f4 <HAL_GPIO_WritePin>
-			  HAL_Delay(100);
- 8003e1a:	2064      	movs	r0, #100	; 0x64
- 8003e1c:	f7fd f830 	bl	8000e80 <HAL_Delay>
+			  HAL_Delay(1000);
+ 8003e1a:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
+ 8003e1e:	f7fd f82f 	bl	8000e80 <HAL_Delay>
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
- 8003e20:	2200      	movs	r2, #0
- 8003e22:	f44f 5100 	mov.w	r1, #8192	; 0x2000
- 8003e26:	4805      	ldr	r0, [pc, #20]	; (8003e3c <main+0xf8>)
- 8003e28:	f7fd fae4 	bl	80013f4 <HAL_GPIO_WritePin>
+ 8003e22:	2200      	movs	r2, #0
+ 8003e24:	f44f 5100 	mov.w	r1, #8192	; 0x2000
+ 8003e28:	4804      	ldr	r0, [pc, #16]	; (8003e3c <main+0xf8>)
+ 8003e2a:	f7fd fae3 	bl	80013f4 <HAL_GPIO_WritePin>
   {
- 8003e2c:	e7ae      	b.n	8003d8c <main+0x48>
- 8003e2e:	bf00      	nop
+ 8003e2e:	e7ad      	b.n	8003d8c <main+0x48>
  8003e30:	20000168 	.word	0x20000168
  8003e34:	200000a8 	.word	0x200000a8
  8003e38:	2000013c 	.word	0x2000013c

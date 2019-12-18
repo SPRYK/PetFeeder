@@ -9,7 +9,7 @@ unsigned int localPort = 2390;
 WiFiUDP udp;
 
 // Gmail
-String email = "getdummy001@gmail.com"; // exist but don't know password need to change
+String email = "team9762@gmail.com"; // exist but don't know password need to change
 #include "Gsender.h"
 #pragma region Globals
 #pragma endregion Globals
@@ -23,16 +23,18 @@ const char* password = "023953174343";
 #define SECRET  "Y9naSXOKUkXT5QCI4UnyR1Fbo"
 
 #define ALIAS   "NodeMCU"
-#define TargetFreeboard "Freeboard"
+#define TargetFreeboard "HTML_web"
+
 
 #define D6 12 
 #define D7 13
 
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
-String minAmount = "40"; // can be change
+String minAmount; // can be change
 String currentAmount = "20";
-String status = "OFF";
+String status = "ON";
+String out;
 
 WiFiClient client;
 MicroGear microgear(client);
@@ -62,7 +64,7 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen)
   }
   Serial.println();
 
-  
+  int count = 0;
   String stateStr = String(strState).substring(0, msglen);
    
   //-----------------receive from server and send to STM32-----------------
@@ -70,20 +72,29 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen)
   {
     status = "ON";
     Serial.println("TURN ON");
+    Serial.println(status);
+    count++;
     chat.print("1");
     chat.println();
+    delay(1000);
   } 
   else if (stateStr == "OFF") 
   {
     status = "OFF";
-    Serial.println("TURN OFF"); 
+    Serial.println("TURN OFF");
+    count++;
+    Serial.println(status); 
     chat.print("0");
     chat.println();
+    delay(1000);
   }
   else if (stateStr.substring(0,1) == "M") {
-      minAmount = stateStr.substring(1,msglen);
-      Serial.println("Set minimum amount to " + minAmount); 
-    }   
+      minAmount = stateStr.substring(2);
+      Serial.println("Set minimum amount to " + minAmount);
+      count++; 
+      delay(1000);
+    }
+  Serial.println(count);   
 }
 
 
@@ -118,6 +129,7 @@ void setup()
     microgear.init(KEY,SECRET,ALIAS);
     microgear.connect(APPID);
     microgear.subscribe("/gearname/NodeMCU/data/$/command");
+
 }
 
 void loop() 
@@ -125,9 +137,8 @@ void loop()
     if (microgear.connected())
     {
        //------------receive from stm32 and send to SERVER---------------------
-       microgear.loop();
        Serial.println("connected");
-
+       microgear.loop();
       //TODO get input to sent by this format
       while(chat.available()){
       char recieved = chat.read();
@@ -151,7 +162,7 @@ void loop()
         data="";  
       }
  
-      String out = String(currentAmount) + "," + String(minAmount) + "," + String(status);
+      out = currentAmount + "," + minAmount + "," + status;
 
       // send email
       if (currentAmount.toInt() < minAmount.toInt()) {

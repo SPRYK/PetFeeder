@@ -278,7 +278,7 @@ int main(void)
 		  if(buf[0]=='1')
 		  {
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
-			  HAL_Delay(100);
+			  HAL_Delay(1000);
 			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
 		  }
 	  }
