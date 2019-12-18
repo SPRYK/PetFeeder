@@ -13,22 +13,23 @@
   function switchPress(logic){
     if(logic == 1 ){
       microgear.chat(thing1,"ON");
+        status = "ON";
     }else if(logic == 0 ){
       microgear.chat(thing1,"OFF");
+        status = "OFF";
     }
   }
   
   function myFunction() {
  
   var newAmount = document.getElementById("newAmount").value;
-  var newEmail = document.getElementById("newEmail").value;
 
-  if (newAmount == '' || newEmail == '') {
+  if (newAmount == '') {
 	alert("Please Enter All Information");
   }
   else {
-        var meassage = newAmount + "/" + newEmail;
-  	microgear.chat(thing1,meassage);
+      var message = "M" + "/" + newAmount;
+      microgear.chat(thing1,message);
   }
 
   
@@ -42,28 +43,16 @@
   });
 
   microgear.on('message',function(topic,msg) {
-    document.getElementById("raw_data").innerHTML = "Data from Node MCU = " + msg;
-    document.getElementById("get_topic").innerHTML = "Topic = " + topic;
+    var split_msg = msg.split(",");
+    document.getElementById("current_amount").innerHTML = "Current Amount = " + split_msg[0] + " %";
+    document.getElementById("min_amount").innerHTML = "Min Amount = " + split_msg[1] + " %";
     
-    var split_msg = msg.split("/"); //String data = "/" +String(currentUltra) 
-					//+ "/" + String(minUltra) "/" + String(status);
-    
-    if(typeof(split_msg[0])!='undefined' && split_msg[0]==""){
-      document.getElementById("current-Ultra").innerHTML = "Current amount = " + split_msg[1] 
-							+ " % ,Minimum amount = " + split_msg[2] + " %";
-    }
 
-    var status = split_msg[3];
-    if(status=="ON"){
-           document.getElementById("Status").innerHTML =  "Load is ON.";
-      }else if(status=="OFF"){
-           document.getElementById("Status").innerHTML =  "Load is OFF."; 
-      }
   });
 
   microgear.on('connected', function() {
     microgear.setAlias(ALIAS);
-    document.getElementById("connected_NETPIE").innerHTML = "Connected to NETPIE"
+    document.getElementById("connected_NETPIE").innerHTML = "Connected"
   });
 
   microgear.on('present', function(event) {
@@ -78,25 +67,31 @@
     microgear.connect(APPID);
   });
 </script>
-<center>
-<h1 id="connected_NETPIE"></h1>
-<p id="raw_data"></p>
-<p id="get_topic"></p>
-<strong id="current-Ultra"></strong>
-<strong id="min-Ultra"></strong>
+<style>
+.btn{
+  background-color: white; 
+  color: black; 
+  border: 2px solid orange;
+}
 
-<button type="button" onclick="switchPress(1)">Turn ON</button>
-<button type="button" onclick="switchPress(0)">Turn OFF</button>
-<p><strong id="Status">Load is OFF.</strong></p>
+.btn:hover {
+  background-color: orange;
+  color: white;
+}
+</style>
+<center>
+<p style="background-color: orange; padding: 5px; font-size: 50px; margin: 0;">Pet Feeder</p>
+<h2 id="connected_NETPIE"></h2>
+<p id="min_amount"></p>
+<p id="current_amount"></p>
+
+<button type="button" onclick="switchPress(1)" class="btn">Turn ON</button>
 
 <form onsubmit="myFunction()">
-	New amount:<br>
+	<div style="padding: 10px">New amount:<br>
 	<input type="text" id="newAmount">
-	<br>
-	Receiver E-mail:<br>
-	<input type="text" id="newEmail">
-	<br><br>
-	<input type="submit">
+    <br></div>
+	<input type="submit" class="btn">
 </form>
 </center>
 </body>

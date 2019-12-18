@@ -31,7 +31,7 @@ const char* password = "023953174343";
 
 SoftwareSerial chat(D6,D7); //RX,TX
 String data;
-String minAmount; // can be change
+String minAmount = "40"; // can be change
 String currentAmount = "20";
 String status = "ON";
 String out;
