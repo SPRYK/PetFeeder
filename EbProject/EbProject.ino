@@ -3,7 +3,7 @@
 #include <MicroGear.h>
 #include <SoftwareSerial.h>
 #include <ESP8266WiFi.h>
-
+#include <TridentTD_LineNotify.h>
 #include <WiFiUdp.h>
 unsigned int localPort = 2390; 
 WiFiUDP udp;
@@ -35,7 +35,8 @@ String minAmount = "40"; // can be change
 String currentAmount = "20";
 String status = "ON";
 String out;
-
+String lineToken = "xdDmFDNwkKGXamqzRoaMuxAHbMSITgfaDLKdLUy5Xcg";
+int state = 0;
 WiFiClient client;
 MicroGear microgear(client);
 
@@ -134,6 +135,7 @@ void setup()
 
 void loop() 
 {
+    LINE.setToken(lineToken);
     if (microgear.connected())
     {
        //------------receive from stm32 and send to SERVER---------------------
@@ -165,10 +167,13 @@ void loop()
       out = currentAmount + "," + minAmount + "," + status;
 
       // send email
-      if (currentAmount.toInt() < minAmount.toInt()) {
-        sendMail();
-        Serial.println("Send E-mail to " + email); 
+      if (currentAmount.toInt() < minAmount.toInt() && state == 0) {
+        LINE.notify("I'm hungry");
+        state = 1; 
         }
+      if (currentAmount.toInt() > minAmount.toInt() && state == 1) {
+        state = 0; 
+      }
       microgear.chat(TargetFreeboard , out);
       microgear.publish("/gearname/NodeMCU/minAmount", String(minAmount));
       Serial.println(out); 
