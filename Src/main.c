@@ -78,7 +78,7 @@ unsigned int min0;
 unsigned int sec0;
 unsigned int diffNotifyTime;
 unsigned int delayTime;
-int maxEmpty = 14;
+int maxEmpty = 20;
 char buf[10];
 int tmp;
 
@@ -178,7 +178,7 @@ void notify()
 
 uint32_t readFromSensor()
 {
-	return hcsr04_read() * .034;
+	return hcsr04_read() * .0346;
 }
 
 void sendByUART(_Bool status,int dist) //send To uart LIKE "OFF,ERROR" or "ON,50"
@@ -217,7 +217,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+HAL_Init();
 
   /* USER CODE BEGIN Init */
 

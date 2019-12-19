@@ -15,8 +15,8 @@ String email = "team9762@gmail.com"; // exist but don't know password need to ch
 #pragma endregion Globals
 
 // Wifi name and password
-const char* ssid     = "tanteam";
-const char* password = "023953174343";
+const char* ssid     = "AndroidAP";
+const char* password = "jwbs8766";
 
 #define APPID   "PetFeederEmbedded"
 #define KEY     "5q0HQ67dWjZqNjB"
@@ -168,7 +168,7 @@ void loop()
 
       // send email
       if (currentAmount.toInt() < minAmount.toInt() && state == 0) {
-        LINE.notify("I'm hungry");
+        LINE.notify("Current Amount is " + (String)currentAmount);
         state = 1; 
         }
       if (currentAmount.toInt() > minAmount.toInt() && state == 1) {

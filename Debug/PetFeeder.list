@@ -8864,7 +8864,7 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8003a64:	51eb851f 	.word	0x51eb851f
 
 08003a68 <delay>:
-int maxEmpty = 14;
+int maxEmpty = 20;
 char buf[10];
 int tmp;
 
@@ -9122,7 +9122,7 @@ uint32_t readFromSensor()
 {
  8003bf8:	b598      	push	{r3, r4, r7, lr}
  8003bfa:	af00      	add	r7, sp, #0
-	return hcsr04_read() * .034;
+	return hcsr04_read() * .0346;
  8003bfc:	f7ff ff4c 	bl	8003a98 <hcsr04_read>
  8003c00:	4603      	mov	r3, r0
  8003c02:	4618      	mov	r0, r3
@@ -9140,8 +9140,8 @@ uint32_t readFromSensor()
  8003c20:	4618      	mov	r0, r3
  8003c22:	bd98      	pop	{r3, r4, r7, pc}
  8003c24:	f3af 8000 	nop.w
- 8003c28:	b020c49c 	.word	0xb020c49c
- 8003c2c:	3fa16872 	.word	0x3fa16872
+ 8003c28:	58e21965 	.word	0x58e21965
+ 8003c2c:	3fa1b717 	.word	0x3fa1b717
 
 08003c30 <sendByUART>:
 
@@ -9294,7 +9294,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+HAL_Init();
  8003d4a:	f7fd f827 	bl	8000d9c <HAL_Init>
   /* USER CODE BEGIN Init */
 
